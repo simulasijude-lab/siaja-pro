@@ -2,285 +2,449 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Guru - SiAJa Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SiAJa Pro - Dashboard Guru</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: #f5f5f5; }
-        .header { background: #2c3e50; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
-        .header h1 { font-size: 24px; }
-        .btn-logout { background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
-        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
-        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 25px; }
-        .card h2 { margin-bottom: 20px; color: #2c3e50; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
-        .btn { padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 5px; }
-        .btn-primary { background: #3498db; color: white; }
-        .btn-success { background: #27ae60; color: white; }
-        .btn-danger { background: #e74c3c; color: white; }
-        .btn-warning { background: #f39c12; color: white; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        th { background: #34495e; color: white; }
-        .tab-btn { padding: 10px 20px; border: none; background: #ecf0f1; cursor: pointer; margin-right: 5px; border-radius: 5px; }
-        .tab-btn.active { background: #3498db; color: white; }
-        .tab-content { display: none; margin-top: 20px; }
-        .tab-content.active { display: block; }
-        .status-aktif { color: green; font-weight: bold; }
-        .status-selesai { color: red; font-weight: bold; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui; }
+        :root { --bg-body: #ecfdf5; --card-bg: #ffffff; --text: #1e293b; --border: #e2e8f0; --input-bg: #ffffff; --header-bg: #f1f5f9; }
+        body.dark { --bg-body: #1e293b; --card-bg: #0f172a; --text: #e2e8f0; --border: #334155; --input-bg: #1e293b; --header-bg: #334155; }
+        body { background: var(--bg-body); padding: 16px; padding-bottom: 80px; transition: 0.2s; color: var(--text); }
+        .app-container { max-width: 1400px; margin: 0 auto; }
+        .kop-surat { background: var(--card-bg); border-radius: 1.5rem; padding: 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .kop-text { flex: 1; text-align: center; }
+        .header-actions { display: flex; gap: 12px; align-items: center; }
+        .dark-toggle, .log-icon { background: var(--card-bg); border: 1px solid var(--border); border-radius: 2rem; padding: 8px 12px; cursor: pointer; font-size: 0.9rem; color: var(--text); }
+        .tab-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; background: var(--card-bg); padding: 8px 16px; border-radius: 50px; }
+        .tab-btn { background: transparent; border: none; padding: 8px 18px; border-radius: 40px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; color: var(--text); transition: 0.2s; }
+        .tab-btn.active { background: #1e4a76; color: white; }
+        .tab-pane { display: none; animation: fade 0.2s; }
+        .tab-pane.active { display: block; }
+        .card { background: var(--card-bg); border-radius: 1.5rem; padding: 1.2rem; margin-bottom: 1.5rem; border: 1px solid var(--border); }
+        .grid-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+        .form-field { flex: 1 1 160px; min-width: 130px; }
+        label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #475569; display: block; margin-bottom: 4px; }
+        input, select, textarea { width: 100%; padding: 8px 12px; border-radius: 2rem; border: 1px solid var(--border); font-size: 0.8rem; background: var(--input-bg); color: var(--text); }
+        button { background: #1e4a76; border: none; padding: 8px 18px; border-radius: 2rem; font-weight: 600; color: white; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: 0.15s; }
+        button:active { transform: scale(0.96); }
+        .btn-outline { background: transparent; border: 1px solid #1e4a76; color: #1e4a76; }
+        .btn-sm { padding: 4px 12px; font-size: 0.7rem; }
+        .btn-danger { background: #b91c1c; }
+        .btn-success { background: #10b981; }
+        .stats-grid { display: flex; flex-wrap: wrap; gap: 15px; margin: 15px 0; }
+        .stat-card { background: var(--input-bg); border-radius: 1rem; padding: 12px; flex: 1; min-width: 150px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+        th, td { border: 1px solid var(--border); padding: 8px; text-align: center; font-size: 0.8rem; }
+        th { background: var(--header-bg); }
+        .modal-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-box { background: var(--card-bg); border-radius: 2rem; padding: 24px; width: 90%; max-width: 700px; max-height: 80vh; overflow-y: auto; }
+        footer { text-align: center; font-size: 0.7rem; margin-top: 24px; color: #475569; position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-body); padding: 12px; border-top: 1px solid var(--border); z-index: 999; }
+        @media (max-width: 640px) { body { padding: 12px; padding-bottom: 70px; } .tab-btn { padding: 6px 12px; font-size: 0.75rem; } }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>👨‍🏫 Dashboard Guru</h1>
-        <div>
-            <span id="namaGuru" style="margin-right:20px;"></span>
-            <button class="btn-logout" onclick="logout()">Logout</button>
+<div class="app-container">
+    <div class="kop-surat">
+        <div class="kop-text">
+            <h2 id="madrasahName">MADRASAH TSANAWIYAH NEGERI 2<br>BOLAANG MONGONDOW TIMUR</h2>
+            <p id="madrasahAlamat">Jl. Pkk Desa Kotabunan Barat, Kec. Kotabunan</p>
+            <p>Tahun Ajaran 2025/2026 - Semester Genap</p>
+        </div>
+        <div class="header-actions">
+            <span id="namaGuruDisplay"></span>
+            <button id="darkModeToggle" class="dark-toggle"><i class="fas fa-moon"></i> Mode Gelap</button>
+            <button id="btnLogout" class="btn-danger btn-sm"><i class="fas fa-sign-out-alt"></i> Logout</button>
         </div>
     </div>
 
-    <div class="container">
-        <!-- Tab Navigation -->
-        <button class="tab-btn active" onclick="showTab('buat-ujian')">📝 Buat Ujian</button>
-        <button class="tab-btn" onclick="showTab('daftar-ujian')">📋 Daftar Ujian</button>
-        <button class="tab-btn" onclick="showTab('hasil-ujian')">📊 Hasil Ujian</button>
+    <div class="tab-buttons">
+        <button class="tab-btn active" data-tab="beranda"><i class="fas fa-home"></i> Beranda</button>
+        <button class="tab-btn" data-tab="ujian"><i class="fas fa-file-alt"></i> Ujian Online</button>
+        <button class="tab-btn" data-tab="bantuan"><i class="fas fa-question-circle"></i> Bantuan</button>
+    </div>
 
-        <!-- Tab 1: Buat Ujian -->
-        <div id="buat-ujian" class="tab-content active">
-            <div class="card">
-                <h2>Buat Ujian Baru</h2>
-                <div class="form-group">
-                    <label>Judul Ujian</label>
-                    <input type="text" id="judulUjian" placeholder="Contoh: Ujian IPA Semester 2">
-                </div>
-                <div class="form-group">
-                    <label>Mata Pelajaran</label>
-                    <input type="text" id="mapelUjian" placeholder="IPA">
-                </div>
-                <div class="form-group">
-                    <label>Kelas</label>
-                    <select id="kelasUjian">
-                        <option value="">Pilih Kelas</option>
-                        <option value="9A">9A</option>
-                        <option value="9B">9B</option>
-                        <option value="9C">9C</option>
-                        <option value="9D">9D</option>
-                        <option value="9E">9E</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Durasi (menit)</label>
-                    <input type="number" id="durasiUjian" value="30" min="5" max="120">
-                </div>
-
-                <h3 style="margin-top:30px;">Soal Ujian</h3>
-                <div id="containerSoal"></div>
-                
-                <button class="btn btn-warning" onclick="tambahSoal()">➕ Tambah Soal</button>
-                <button class="btn btn-success" onclick="simpanUjian()" style="margin-top:20px;">💾 Simpan Ujian</button>
+    <!-- TAB BERANDA -->
+    <div id="beranda" class="tab-pane active">
+        <div class="card">
+            <h3>📊 Dashboard Guru</h3>
+            <div class="stats-grid">
+                <div class="stat-card"><i class="fas fa-book"></i> Total Ujian: <strong id="totalUjian">0</strong></div>
+                <div class="stat-card"><i class="fas fa-users"></i> Total Siswa: <strong id="totalSiswaUjian">0</strong></div>
+                <div class="stat-card"><i class="fas fa-check-circle"></i> Ujian Aktif: <strong id="ujianAktif">0</strong></div>
             </div>
         </div>
-
-        <!-- Tab 2: Daftar Ujian -->
-        <div id="daftar-ujian" class="tab-content">
-            <div class="card">
-                <h2>Daftar Ujian</h2>
-                <table id="tabelUjian">
-                    <thead>
-                        <tr><th>Kode</th><th>Judul</th><th>Kelas</th><th>Status</th><th>Aksi</th></tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Tab 3: Hasil Ujian -->
-        <div id="hasil-ujian" class="tab-content">
-            <div class="card">
-                <h2>Hasil Ujian</h2>
-                <div class="form-group">
-                    <label>Pilih Ujian</label>
-                    <select id="pilihUjianHasil" onchange="tampilkanHasil()">
-                        <option value="">Pilih Ujian</option>
-                    </select>
-                </div>
-                <table id="tabelHasil" style="display:none;">
-                    <thead>
-                        <tr><th>No</th><th>Nama Siswa</th><th>Nilai</th><th>Waktu Selesai</th></tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-                <canvas id="chartHasil" style="max-height:300px; margin-top:30px;"></canvas>
-            </div>
+        <div class="card">
+            <h3>📋 Ujian Terbaru</h3>
+            <table id="tabelUjianTerbaru">
+                <thead><tr><th>Kode</th><th>Judul</th><th>Kelas</th><th>Status</th><th>Aksi</th></tr></thead>
+                <tbody></tbody>
+            </table>
         </div>
     </div>
 
-    <script src="script.js"></script>
-    <script>
-        // Inisialisasi Supabase
-        const SUPABASE_URL = 'https://abcdefghijklm.supabase.co'; // GANTI NANTI
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // GANTI NANTI
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <!-- TAB UJIAN ONLINE -->
+    <div id="ujian" class="tab-pane">
+        <!-- Sub-tab untuk Ujian -->
+        <button class="tab-btn active" data-subtab="buat-ujian" style="margin-bottom:10px;">📝 Buat Ujian</button>
+        <button class="tab-btn" data-subtab="daftar-ujian" style="margin-bottom:10px;">📋 Daftar Ujian</button>
+        <button class="tab-btn" data-subtab="hasil-ujian" style="margin-bottom:10px;">📊 Hasil Ujian</button>
 
-        // Cek login
-        async function cekLogin() {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-                window.location.href = 'login-guru.html';
-                return;
-            }
-            document.getElementById('namaGuru').textContent = session.user.email;
-            loadDaftarUjian();
-            loadPilihUjian();
-        }
+        <!-- Sub-tab: Buat Ujian -->
+        <div id="buat-ujian" class="card" style="display:block;">
+            <h3>Buat Ujian Baru</h3>
+            <div class="grid-form">
+                <div class="form-field"><label>Judul Ujian</label><input type="text" id="judulUjian" placeholder="Contoh: Ujian IPA Bab 1"></div>
+                <div class="form-field"><label>Mata Pelajaran</label><input type="text" id="mapelUjian" placeholder="IPA"></div>
+                <div class="form-field"><label>Kelas</label><select id="kelasUjian"><option value="">Pilih</option><option>9A</option><option>9B</option><option>9C</option><option>9D</option><option>9E</option></select></div>
+                <div class="form-field"><label>Durasi (menit)</label><input type="number" id="durasiUjian" value="30" min="5" max="120"></div>
+            </div>
+            <h4 style="margin-top:20px;">Soal Ujian</h4>
+            <div id="containerSoal"></div>
+            <button class="btn-sm btn-success" onclick="tambahSoal()" style="margin-top:10px;">➕ Tambah Soal</button>
+            <button class="btn-success" onclick="simpanUjian()" style="margin-top:15px; width:100%;">💾 Simpan Ujian</button>
+        </div>
 
-        function logout() {
-            supabase.auth.signOut();
-            window.location.href = 'index.html';
-        }
+        <!-- Sub-tab: Daftar Ujian -->
+        <div id="daftar-ujian" class="card" style="display:none;">
+            <h3>Daftar Ujian</h3>
+            <table id="tabelSemuaUjian">
+                <thead><tr><th>Kode</th><th>Judul</th><th>Kelas</th><th>Durasi</th><th>Status</th><th>Aksi</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
 
-        // Tab navigation
-        function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            event.target.classList.add('active');
-        }
+        <!-- Sub-tab: Hasil Ujian -->
+        <div id="hasil-ujian" class="card" style="display:none;">
+            <h3>Hasil Ujian</h3>
+            <div class="form-field"><label>Pilih Ujian</label><select id="pilihUjianHasil" onchange="tampilkanHasil()"><option value="">--Pilih--</option></select></div>
+            <table id="tabelHasil" style="display:none;">
+                <thead><tr><th>No</th><th>Nama</th><th>Nilai</th><th>Waktu</th></tr></thead>
+                <tbody></tbody>
+            </table>
+            <canvas id="chartHasil" style="max-height:300px; margin-top:20px;"></canvas>
+        </div>
+    </div>
 
-        // Tambah soal
-        let nomorSoal = 0;
-        function tambahSoal() {
-            nomorSoal++;
-            const container = document.getElementById('containerSoal');
-            const div = document.createElement('div');
-            div.className = 'card';
-            div.style.marginTop = '10px';
-            div.innerHTML = `
-                <h4>Soal #${nomorSoal}</h4>
-                <div class="form-group">
-                    <label>Tipe Soal</label>
-                    <select class="tipeSoal">
-                        <option value="pilihan_ganda">Pilihan Ganda</option>
-                        <option value="pg_kompleks">Pilihan Ganda Kompleks</option>
-                        <option value="benar_salah">Benar/Salah</option>
-                        <option value="menjodohkan">Menjodohkan</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Pertanyaan</label>
-                    <textarea class="pertanyaan" rows="3"></textarea>
-                </div>
-                <div class="pilihanContainer">
-                    <label>Pilihan (pisahkan dengan | )</label>
-                    <input type="text" class="pilihan" placeholder="Jakarta|Bandung|Surabaya|Medan">
-                </div>
-                <div class="form-group">
-                    <label>Kunci Jawaban</label>
-                    <input type="text" class="kunci" placeholder="0 (untuk pilihan pertama)">
-                </div>
-                <button class="btn btn-danger" onclick="this.parentElement.remove()">Hapus Soal</button>
-            `;
-            container.appendChild(div);
-        }
+    <!-- TAB BANTUAN -->
+    <div id="bantuan" class="tab-pane">
+        <div class="card">
+            <h3><i class="fas fa-question-circle"></i> Bantuan</h3>
+            <ul>
+                <li><strong>Buat Ujian:</strong> Isi judul, mapel, kelas, durasi, lalu tambah soal.</li>
+                <li><strong>Kode Akses:</strong> Muncul setelah simpan, berikan ke siswa.</li>
+                <li><strong>Lihat Hasil:</strong> Pilih ujian di tab Hasil, nilai muncul otomatis.</li>
+                <li><strong>Logout:</strong> Klik tombol merah di pojok kanan atas.</li>
+            </ul>
+        </div>
+    </div>
 
-        // Simpan ujian
-        async function simpanUjian() {
-            const judul = document.getElementById('judulUjian').value;
-            const mapel = document.getElementById('mapelUjian').value;
-            const kelas = document.getElementById('kelasUjian').value;
-            const durasi = document.getElementById('durasiUjian').value;
-            
-            if (!judul || !mapel || !kelas) return alert('Lengkapi semua field!');
+    <footer><i class="fas fa-database"></i> SiAJa Pro - Data tersimpan aman di cloud</footer>
+</div>
 
-            const soalElements = document.querySelectorAll('#containerSoal > div');
-            const soalArray = [];
-            
-            soalElements.forEach(el => {
-                const tipe = el.querySelector('.tipeSoal').value;
-                const pertanyaan = el.querySelector('.pertanyaan').value;
-                const pilihan = el.querySelector('.pilihan')?.value;
-                const kunci = el.querySelector('.kunci').value;
-                
-                soalArray.push({ tipe, pertanyaan, pilihan, kunci });
-            });
+<script>
+// ======================= SUPABASE CONFIG =======================
+const SUPABASE_URL = 'https://iadrrnkztxdwqubrnbqp.supabase.co/rest/v1/';
+const SUPABASE_ANON_KEY = 'sb_publishable_jCNMmqYsja98OOI6HyYfrg_xVz20hH3';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-            if (soalArray.length === 0) return alert('Tambahkan minimal 1 soal!');
+let currentUser = null;
+let chartHasil = null;
 
-            const kodeAkses = 'UJIAN-' + kelas + '-' + Math.random().toString(36).substring(2,8).toUpperCase();
+// ======================= AUTH =======================
+async function cekLogin() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+        window.location.href = 'index.html';
+        return;
+    }
+    currentUser = session.user;
+    document.getElementById('namaGuruDisplay').textContent = '👨‍🏫 ' + (currentUser.email || 'Guru');
+    loadDashboard();
+    loadDaftarUjian();
+    loadPilihUjian();
+}
 
-            const { data, error } = await supabase
-                .from('ujian')
-                .insert([{
-                    judul, mapel, kelas,
-                    durasi_menit: durasi,
-                    soal: soalArray,
-                    kode_akses: kodeAkses,
-                    created_by: (await supabase.auth.getSession()).data.session.user.id
-                }])
-                .select();
+async function logout() {
+    await supabase.auth.signOut();
+    window.location.href = 'index.html';
+}
 
-            if (error) return alert('Error: ' + error.message);
+// ======================= TAB NAVIGATION =======================
+document.addEventListener('DOMContentLoaded', () => {
+    // Tab utama
+    document.querySelectorAll('.tab-buttons > .tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab-buttons > .tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById(this.dataset.tab).classList.add('active');
+        });
+    });
 
-            alert('✅ Ujian berhasil disimpan!\n\nKode Akses: ' + kodeAkses + '\n\nBerikan kode ini ke siswa!');
-            location.reload();
-        }
+    // Sub-tab ujian
+    document.querySelectorAll('#ujian .tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('#ujian .tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('#ujian > div[class="card"]').forEach(d => d.style.display = 'none');
+            this.classList.add('active');
+            const targetId = this.dataset.subtab;
+            document.getElementById(targetId).style.display = 'block';
+            if (targetId === 'daftar-ujian') loadDaftarUjian();
+            if (targetId === 'hasil-ujian') loadPilihUjian();
+        });
+    });
 
-        // Load daftar ujian
-        async function loadDaftarUjian() {
-            const { data } = await supabase.from('ujian').select('*');
-            if (!data) return;
-            
-            const tbody = document.querySelector('#tabelUjian tbody');
-            tbody.innerHTML = data.map(u => `
-                <tr>
-                    <td><strong>${u.kode_akses}</strong></td>
-                    <td>${u.judul}</td>
-                    <td>${u.kelas}</td>
-                    <td class="status-${u.status}">${u.status}</td>
-                    <td>
-                        <button class="btn btn-primary" onclick="lihatHasil('${u.id}')">Lihat Hasil</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
+    // Dark mode
+    document.getElementById('darkModeToggle').addEventListener('click', () => {
+        document.body.classList.toggle('dark');
+        localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+    });
+    if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark');
 
-        // Load pilihan ujian untuk tab hasil
-        async function loadPilihUjian() {
-            const { data } = await supabase.from('ujian').select('*');
-            const select = document.getElementById('pilihUjianHasil');
-            select.innerHTML = '<option value="">Pilih Ujian</option>' + 
-                data.map(u => `<option value="${u.id}">${u.judul} - ${u.kelas}</option>`).join('');
-        }
+    // Logout
+    document.getElementById('btnLogout').addEventListener('click', logout);
+});
 
-        // Tampilkan hasil
-        async function tampilkanHasil() {
-            const ujianId = document.getElementById('pilihUjianHasil').value;
-            if (!ujianId) return;
+// ======================= DASHBOARD =======================
+async function loadDashboard() {
+    const { data: ujian } = await supabase.from('ujian').select('*');
+    const { data: hasil } = await supabase.from('hasil_ujian').select('*');
+    
+    document.getElementById('totalUjian').textContent = ujian?.length || 0;
+    document.getElementById('ujianAktif').textContent = ujian?.filter(u => u.status === 'aktif').length || 0;
+    document.getElementById('totalSiswaUjian').textContent = hasil?.length || 0;
 
-            const { data } = await supabase
-                .from('hasil_ujian')
-                .select('*, profiles(nama_lengkap)')
-                .eq('ujian_id', ujianId);
+    // Tabel ujian terbaru
+    const tbody = document.querySelector('#tabelUjianTerbaru tbody');
+    if (ujian && ujian.length > 0) {
+        tbody.innerHTML = ujian.slice(0, 5).map(u => `
+            <tr>
+                <td><strong>${u.kode_akses}</strong></td>
+                <td>${u.judul}</td>
+                <td>${u.kelas}</td>
+                <td>${u.status === 'aktif' ? '🟢 Aktif' : '🔴 Selesai'}</td>
+                <td><button class="btn-sm" onclick="lihatHasilUjian('${u.id}')">Lihat Hasil</button></td>
+            </tr>
+        `).join('');
+    } else {
+        tbody.innerHTML = '<tr><td colspan="5">Belum ada ujian</td></tr>';
+    }
+}
 
-            if (!data || data.length === 0) return alert('Belum ada hasil ujian');
+// ======================= BUAT SOAL =======================
+let nomorSoal = 0;
 
-            document.getElementById('tabelHasil').style.display = 'table';
-            const tbody = document.querySelector('#tabelHasil tbody');
-            tbody.innerHTML = data.map((h, i) => `
-                <tr>
-                    <td>${i+1}</td>
-                    <td>${h.profiles.nama_lengkap}</td>
-                    <td><strong>${h.nilai}</strong></td>
-                    <td>${new Date(h.selesai).toLocaleString()}</td>
-                </tr>
-            `).join('');
-        }
+function tambahSoal() {
+    nomorSoal++;
+    const container = document.getElementById('containerSoal');
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.style.marginTop = '10px';
+    div.innerHTML = `
+        <h4>Soal #${nomorSoal} 
+            <button class="btn-danger btn-sm" onclick="this.parentElement.parentElement.remove()" style="float:right;">🗑️ Hapus</button>
+        </h4>
+        <div class="grid-form">
+            <div class="form-field">
+                <label>Tipe Soal</label>
+                <select class="tipeSoal">
+                    <option value="pilihan_ganda">Pilihan Ganda</option>
+                    <option value="pg_kompleks">Pilihan Ganda Kompleks</option>
+                    <option value="benar_salah">Benar/Salah</option>
+                    <option value="menjodohkan">Menjodohkan</option>
+                </select>
+            </div>
+            <div class="form-field">
+                <label>Bobot</label>
+                <input type="number" class="bobot" value="10" min="1" max="100">
+            </div>
+        </div>
+        <div class="form-field">
+            <label>Pertanyaan</label>
+            <textarea class="pertanyaan" rows="2" placeholder="Tulis pertanyaan di sini..."></textarea>
+        </div>
+        <div class="form-field pilihanContainer">
+            <label>Pilihan (pisahkan dengan | )</label>
+            <input type="text" class="pilihan" placeholder="Jakarta|Bandung|Surabaya|Medan">
+        </div>
+        <div class="form-field">
+            <label>Kunci Jawaban (index mulai 0)</label>
+            <input type="text" class="kunci" placeholder="0">
+        </div>
+    `;
+    container.appendChild(div);
+}
 
-        window.onload = cekLogin;
-    </script>
+// ======================= SIMPAN UJIAN =======================
+async function simpanUjian() {
+    const judul = document.getElementById('judulUjian').value.trim();
+    const mapel = document.getElementById('mapelUjian').value.trim();
+    const kelas = document.getElementById('kelasUjian').value;
+    const durasi = parseInt(document.getElementById('durasiUjian').value);
+
+    if (!judul || !mapel || !kelas || !durasi) {
+        alert('❌ Lengkapi semua field!');
+        return;
+    }
+
+    const soalElements = document.querySelectorAll('#containerSoal > div');
+    if (soalElements.length === 0) {
+        alert('❌ Tambahkan minimal 1 soal!');
+        return;
+    }
+
+    const soalArray = [];
+    soalElements.forEach(el => {
+        soalArray.push({
+            tipe: el.querySelector('.tipeSoal').value,
+            pertanyaan: el.querySelector('.pertanyaan').value,
+            pilihan: el.querySelector('.pilihan')?.value || '',
+            kunci: el.querySelector('.kunci').value,
+            bobot: parseInt(el.querySelector('.bobot')?.value || 10)
+        });
+    });
+
+    const kodeAkses = 'UJIAN-' + kelas + '-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    const { data, error } = await supabase
+        .from('ujian')
+        .insert([{
+            judul,
+            mapel,
+            kelas,
+            durasi_menit: durasi,
+            soal: JSON.stringify(soalArray),
+            kode_akses: kodeAkses,
+            created_by: currentUser.id,
+            status: 'aktif'
+        }])
+        .select();
+
+    if (error) {
+        alert('❌ Error: ' + error.message);
+        return;
+    }
+
+    alert('✅ Ujian BERHASIL disimpan!\n\n📋 Kode Akses: ' + kodeAkses + '\n\n⚠️ CATAT & BERIKAN kode ini ke siswa!');
+    
+    // Reset form
+    document.getElementById('judulUjian').value = '';
+    document.getElementById('mapelUjian').value = '';
+    document.getElementById('kelasUjian').value = '';
+    document.getElementById('durasiUjian').value = '30';
+    document.getElementById('containerSoal').innerHTML = '';
+    nomorSoal = 0;
+    loadDashboard();
+    loadDaftarUjian();
+}
+
+// ======================= DAFTAR UJIAN =======================
+async function loadDaftarUjian() {
+    const { data } = await supabase
+        .from('ujian')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    const tbody = document.querySelector('#tabelSemuaUjian tbody');
+    if (data && data.length > 0) {
+        tbody.innerHTML = data.map(u => `
+            <tr>
+                <td><strong>${u.kode_akses}</strong></td>
+                <td>${u.judul}</td>
+                <td>${u.kelas}</td>
+                <td>${u.durasi_menit} menit</td>
+                <td>${u.status === 'aktif' ? '🟢 Aktif' : '🔴 Selesai'}</td>
+                <td>
+                    <button class="btn-sm btn-success" onclick="lihatHasilUjian('${u.id}')">📊 Hasil</button>
+                    ${u.status === 'aktif' ? `<button class="btn-sm btn-danger" onclick="tutupUjian('${u.id}')">🔒 Tutup</button>` : ''}
+                </td>
+            </tr>
+        `).join('');
+    } else {
+        tbody.innerHTML = '<tr><td colspan="6">Belum ada ujian</td></tr>';
+    }
+}
+
+async function tutupUjian(id) {
+    if (!confirm('Tutup ujian ini? Siswa tidak bisa mengakses lagi.')) return;
+    await supabase.from('ujian').update({ status: 'selesai' }).eq('id', id);
+    alert('✅ Ujian ditutup!');
+    loadDaftarUjian();
+    loadDashboard();
+}
+
+function lihatHasilUjian(id) {
+    document.querySelectorAll('.tab-buttons > .tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelector('[data-tab="ujian"]').classList.add('active');
+    document.getElementById('ujian').classList.add('active');
+    
+    document.querySelectorAll('#ujian .tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#ujian > div[class="card"]').forEach(d => d.style.display = 'none');
+    document.querySelector('[data-subtab="hasil-ujian"]').classList.add('active');
+    document.getElementById('hasil-ujian').style.display = 'block';
+    
+    document.getElementById('pilihUjianHasil').value = id;
+    tampilkanHasil();
+}
+
+// ======================= HASIL UJIAN =======================
+async function loadPilihUjian() {
+    const { data } = await supabase.from('ujian').select('*').order('created_at', { ascending: false });
+    const select = document.getElementById('pilihUjianHasil');
+    select.innerHTML = '<option value="">--Pilih Ujian--</option>' + 
+        (data?.map(u => `<option value="${u.id}">${u.judul} - ${u.kelas}</option>`).join('') || '');
+}
+
+async function tampilkanHasil() {
+    const ujianId = document.getElementById('pilihUjianHasil').value;
+    if (!ujianId) return;
+
+    const { data, error } = await supabase
+        .from('hasil_ujian')
+        .select('*, profiles(nama_lengkap, email)')
+        .eq('ujian_id', ujianId)
+        .order('nilai', { ascending: false });
+
+    if (error || !data || data.length === 0) {
+        alert('📭 Belum ada siswa yang mengerjakan ujian ini.');
+        document.getElementById('tabelHasil').style.display = 'none';
+        return;
+    }
+
+    document.getElementById('tabelHasil').style.display = 'table';
+    const tbody = document.querySelector('#tabelHasil tbody');
+    tbody.innerHTML = data.map((h, i) => `
+        <tr>
+            <td>${i+1}</td>
+            <td>${h.profiles?.nama_lengkap || h.profiles?.email || 'Siswa'}</td>
+            <td><strong>${h.nilai}</strong></td>
+            <td>${new Date(h.selesai).toLocaleString('id-ID')}</td>
+        </tr>
+    `).join('');
+
+    // Chart
+    if (chartHasil) chartHasil.destroy();
+    const ctx = document.getElementById('chartHasil').getContext('2d');
+    chartHasil = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.map(h => h.profiles?.nama_lengkap || 'Siswa'),
+            datasets: [{
+                label: 'Nilai',
+                data: data.map(h => h.nilai),
+                backgroundColor: '#1e4a76'
+            }]
+        },
+        options: { responsive: true }
+    });
+}
+
+// ======================= INIT =======================
+window.onload = cekLogin;
+</script>
 </body>
 </html>
