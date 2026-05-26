@@ -49,12 +49,12 @@
 <div class="app-container">
     <div class="kop-surat">
         <div class="kop-text">
-            <h2 id="madrasahName">MADRASAH TSANAWIYAH NEGERI 2<br>BOLAANG MONGONDOW TIMUR</h2>
-            <p id="madrasahAlamat">Jl. Pkk Desa Kotabunan Barat, Kec. Kotabunan</p>
+            <h2>MADRASAH TSANAWIYAH NEGERI 2<br>BOLAANG MONGONDOW TIMUR</h2>
+            <p>Jl. Pkk Desa Kotabunan Barat, Kec. Kotabunan</p>
             <p>Tahun Ajaran 2025/2026 - Semester Genap</p>
         </div>
         <div class="header-actions">
-            <span id="namaGuruDisplay"></span>
+            <span id="namaGuruDisplay" style="font-weight:bold;"></span>
             <button id="darkModeToggle" class="dark-toggle"><i class="fas fa-moon"></i> Mode Gelap</button>
             <button id="btnLogout" class="btn-danger btn-sm"><i class="fas fa-sign-out-alt"></i> Logout</button>
         </div>
@@ -72,7 +72,7 @@
             <h3>📊 Dashboard Guru</h3>
             <div class="stats-grid">
                 <div class="stat-card"><i class="fas fa-book"></i> Total Ujian: <strong id="totalUjian">0</strong></div>
-                <div class="stat-card"><i class="fas fa-users"></i> Total Siswa: <strong id="totalSiswaUjian">0</strong></div>
+                <div class="stat-card"><i class="fas fa-users"></i> Siswa Ujian: <strong id="totalSiswaUjian">0</strong></div>
                 <div class="stat-card"><i class="fas fa-check-circle"></i> Ujian Aktif: <strong id="ujianAktif">0</strong></div>
             </div>
         </div>
@@ -87,12 +87,10 @@
 
     <!-- TAB UJIAN ONLINE -->
     <div id="ujian" class="tab-pane">
-        <!-- Sub-tab untuk Ujian -->
         <button class="tab-btn active" data-subtab="buat-ujian" style="margin-bottom:10px;">📝 Buat Ujian</button>
         <button class="tab-btn" data-subtab="daftar-ujian" style="margin-bottom:10px;">📋 Daftar Ujian</button>
         <button class="tab-btn" data-subtab="hasil-ujian" style="margin-bottom:10px;">📊 Hasil Ujian</button>
 
-        <!-- Sub-tab: Buat Ujian -->
         <div id="buat-ujian" class="card" style="display:block;">
             <h3>Buat Ujian Baru</h3>
             <div class="grid-form">
@@ -107,7 +105,6 @@
             <button class="btn-success" onclick="simpanUjian()" style="margin-top:15px; width:100%;">💾 Simpan Ujian</button>
         </div>
 
-        <!-- Sub-tab: Daftar Ujian -->
         <div id="daftar-ujian" class="card" style="display:none;">
             <h3>Daftar Ujian</h3>
             <table id="tabelSemuaUjian">
@@ -116,7 +113,6 @@
             </table>
         </div>
 
-        <!-- Sub-tab: Hasil Ujian -->
         <div id="hasil-ujian" class="card" style="display:none;">
             <h3>Hasil Ujian</h3>
             <div class="form-field"><label>Pilih Ujian</label><select id="pilihUjianHasil" onchange="tampilkanHasil()"><option value="">--Pilih--</option></select></div>
@@ -133,48 +129,36 @@
         <div class="card">
             <h3><i class="fas fa-question-circle"></i> Bantuan</h3>
             <ul>
-                <li><strong>Buat Ujian:</strong> Isi judul, mapel, kelas, durasi, lalu tambah soal.</li>
+                <li><strong>Buat Ujian:</strong> Isi form, tambah soal, simpan.</li>
                 <li><strong>Kode Akses:</strong> Muncul setelah simpan, berikan ke siswa.</li>
-                <li><strong>Lihat Hasil:</strong> Pilih ujian di tab Hasil, nilai muncul otomatis.</li>
-                <li><strong>Logout:</strong> Klik tombol merah di pojok kanan atas.</li>
+                <li><strong>Lihat Hasil:</strong> Pilih ujian di tab Hasil.</li>
             </ul>
         </div>
     </div>
 
-    <footer><i class="fas fa-database"></i> SiAJa Pro - Data tersimpan aman di cloud</footer>
+    <footer><i class="fas fa-database"></i> SiAJa Pro - v2.0</footer>
 </div>
 
 <script>
-// ======================= SUPABASE CONFIG =======================
-const SUPABASE_URL = 'https://iadrrnkztxdwqubrnbqp.supabase.co/rest/v1/';
-const SUPABASE_ANON_KEY = 'sb_publishable_jCNMmqYsja98OOI6HyYfrg_xVz20hH3';
+// ======================= KONFIGURASI SUPABASE =======================
+const SUPABASE_URL = 'https://iadrrnkztxdwqubrnbqp.supabase.co/rest/v1/'; // ⚠️ GANTI INI
+const SUPABASE_ANON_KEY = 'sb_publishable_jCNMmqYsja98OOI6HyYfrg_xVz20hH3'; // ⚠️ GANTI INI
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null;
 let chartHasil = null;
 
-// ======================= AUTH =======================
 async function cekLogin() {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-        window.location.href = 'index.html';
-        return;
-    }
+    if (!session) { window.location.href = 'index.html'; return; }
     currentUser = session.user;
     document.getElementById('namaGuruDisplay').textContent = '👨‍🏫 ' + (currentUser.email || 'Guru');
-    loadDashboard();
-    loadDaftarUjian();
-    loadPilihUjian();
+    loadDashboard(); loadDaftarUjian(); loadPilihUjian();
 }
 
-async function logout() {
-    await supabase.auth.signOut();
-    window.location.href = 'index.html';
-}
+async function logout() { await supabase.auth.signOut(); window.location.href = 'index.html'; }
 
-// ======================= TAB NAVIGATION =======================
 document.addEventListener('DOMContentLoaded', () => {
-    // Tab utama
     document.querySelectorAll('.tab-buttons > .tab-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelectorAll('.tab-buttons > .tab-btn').forEach(b => b.classList.remove('active'));
@@ -183,197 +167,83 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById(this.dataset.tab).classList.add('active');
         });
     });
-
-    // Sub-tab ujian
     document.querySelectorAll('#ujian .tab-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelectorAll('#ujian .tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('#ujian > div[class="card"]').forEach(d => d.style.display = 'none');
             this.classList.add('active');
-            const targetId = this.dataset.subtab;
-            document.getElementById(targetId).style.display = 'block';
-            if (targetId === 'daftar-ujian') loadDaftarUjian();
-            if (targetId === 'hasil-ujian') loadPilihUjian();
+            document.getElementById(this.dataset.subtab).style.display = 'block';
+            if (this.dataset.subtab === 'daftar-ujian') loadDaftarUjian();
+            if (this.dataset.subtab === 'hasil-ujian') loadPilihUjian();
         });
     });
-
-    // Dark mode
     document.getElementById('darkModeToggle').addEventListener('click', () => {
         document.body.classList.toggle('dark');
         localStorage.setItem('darkMode', document.body.classList.contains('dark'));
     });
     if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark');
-
-    // Logout
     document.getElementById('btnLogout').addEventListener('click', logout);
 });
 
-// ======================= DASHBOARD =======================
 async function loadDashboard() {
     const { data: ujian } = await supabase.from('ujian').select('*');
     const { data: hasil } = await supabase.from('hasil_ujian').select('*');
-    
     document.getElementById('totalUjian').textContent = ujian?.length || 0;
     document.getElementById('ujianAktif').textContent = ujian?.filter(u => u.status === 'aktif').length || 0;
     document.getElementById('totalSiswaUjian').textContent = hasil?.length || 0;
-
-    // Tabel ujian terbaru
     const tbody = document.querySelector('#tabelUjianTerbaru tbody');
     if (ujian && ujian.length > 0) {
-        tbody.innerHTML = ujian.slice(0, 5).map(u => `
-            <tr>
-                <td><strong>${u.kode_akses}</strong></td>
-                <td>${u.judul}</td>
-                <td>${u.kelas}</td>
-                <td>${u.status === 'aktif' ? '🟢 Aktif' : '🔴 Selesai'}</td>
-                <td><button class="btn-sm" onclick="lihatHasilUjian('${u.id}')">Lihat Hasil</button></td>
-            </tr>
-        `).join('');
-    } else {
-        tbody.innerHTML = '<tr><td colspan="5">Belum ada ujian</td></tr>';
-    }
+        tbody.innerHTML = ujian.slice(0, 5).map(u => `<tr><td><strong>${u.kode_akses}</strong></td><td>${u.judul}</td><td>${u.kelas}</td><td>${u.status === 'aktif' ? '🟢 Aktif' : '🔴 Selesai'}</td><td><button class="btn-sm" onclick="lihatHasilUjian('${u.id}')">Lihat</button></td></tr>`).join('');
+    } else { tbody.innerHTML = '<tr><td colspan="5">Belum ada ujian</td></tr>'; }
 }
 
-// ======================= BUAT SOAL =======================
 let nomorSoal = 0;
-
 function tambahSoal() {
     nomorSoal++;
     const container = document.getElementById('containerSoal');
     const div = document.createElement('div');
-    div.className = 'card';
-    div.style.marginTop = '10px';
-    div.innerHTML = `
-        <h4>Soal #${nomorSoal} 
-            <button class="btn-danger btn-sm" onclick="this.parentElement.parentElement.remove()" style="float:right;">🗑️ Hapus</button>
-        </h4>
+    div.className = 'card'; div.style.marginTop = '10px';
+    div.innerHTML = `<h4>Soal #${nomorSoal} <button class="btn-danger btn-sm" onclick="this.parentElement.parentElement.remove()" style="float:right;">🗑️</button></h4>
         <div class="grid-form">
-            <div class="form-field">
-                <label>Tipe Soal</label>
-                <select class="tipeSoal">
-                    <option value="pilihan_ganda">Pilihan Ganda</option>
-                    <option value="pg_kompleks">Pilihan Ganda Kompleks</option>
-                    <option value="benar_salah">Benar/Salah</option>
-                    <option value="menjodohkan">Menjodohkan</option>
-                </select>
-            </div>
-            <div class="form-field">
-                <label>Bobot</label>
-                <input type="number" class="bobot" value="10" min="1" max="100">
-            </div>
+            <div class="form-field"><label>Tipe</label><select class="tipeSoal"><option value="pilihan_ganda">PG</option><option value="pg_kompleks">PG Kompleks</option><option value="benar_salah">B/S</option><option value="menjodohkan">Menjodohkan</option></select></div>
+            <div class="form-field"><label>Bobot</label><input type="number" class="bobot" value="10" min="1" max="100"></div>
         </div>
-        <div class="form-field">
-            <label>Pertanyaan</label>
-            <textarea class="pertanyaan" rows="2" placeholder="Tulis pertanyaan di sini..."></textarea>
-        </div>
-        <div class="form-field pilihanContainer">
-            <label>Pilihan (pisahkan dengan | )</label>
-            <input type="text" class="pilihan" placeholder="Jakarta|Bandung|Surabaya|Medan">
-        </div>
-        <div class="form-field">
-            <label>Kunci Jawaban (index mulai 0)</label>
-            <input type="text" class="kunci" placeholder="0">
-        </div>
-    `;
+        <div class="form-field"><label>Pertanyaan</label><textarea class="pertanyaan" rows="2"></textarea></div>
+        <div class="form-field"><label>Pilihan (|)</label><input type="text" class="pilihan" placeholder="A|B|C|D"></div>
+        <div class="form-field"><label>Kunci (index)</label><input type="text" class="kunci" placeholder="0"></div>`;
     container.appendChild(div);
 }
 
-// ======================= SIMPAN UJIAN =======================
 async function simpanUjian() {
     const judul = document.getElementById('judulUjian').value.trim();
     const mapel = document.getElementById('mapelUjian').value.trim();
     const kelas = document.getElementById('kelasUjian').value;
     const durasi = parseInt(document.getElementById('durasiUjian').value);
-
-    if (!judul || !mapel || !kelas || !durasi) {
-        alert('❌ Lengkapi semua field!');
-        return;
-    }
-
+    if (!judul || !mapel || !kelas || !durasi) return alert('Lengkapi semua field!');
     const soalElements = document.querySelectorAll('#containerSoal > div');
-    if (soalElements.length === 0) {
-        alert('❌ Tambahkan minimal 1 soal!');
-        return;
-    }
-
+    if (soalElements.length === 0) return alert('Tambahkan minimal 1 soal!');
     const soalArray = [];
-    soalElements.forEach(el => {
-        soalArray.push({
-            tipe: el.querySelector('.tipeSoal').value,
-            pertanyaan: el.querySelector('.pertanyaan').value,
-            pilihan: el.querySelector('.pilihan')?.value || '',
-            kunci: el.querySelector('.kunci').value,
-            bobot: parseInt(el.querySelector('.bobot')?.value || 10)
-        });
-    });
-
+    soalElements.forEach(el => soalArray.push({
+        tipe: el.querySelector('.tipeSoal').value,
+        pertanyaan: el.querySelector('.pertanyaan').value,
+        pilihan: el.querySelector('.pilihan')?.value || '',
+        kunci: el.querySelector('.kunci').value,
+        bobot: parseInt(el.querySelector('.bobot')?.value || 10)
+    }));
     const kodeAkses = 'UJIAN-' + kelas + '-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-
-    const { data, error } = await supabase
-        .from('ujian')
-        .insert([{
-            judul,
-            mapel,
-            kelas,
-            durasi_menit: durasi,
-            soal: JSON.stringify(soalArray),
-            kode_akses: kodeAkses,
-            created_by: currentUser.id,
-            status: 'aktif'
-        }])
-        .select();
-
-    if (error) {
-        alert('❌ Error: ' + error.message);
-        return;
-    }
-
-    alert('✅ Ujian BERHASIL disimpan!\n\n📋 Kode Akses: ' + kodeAkses + '\n\n⚠️ CATAT & BERIKAN kode ini ke siswa!');
-    
-    // Reset form
-    document.getElementById('judulUjian').value = '';
-    document.getElementById('mapelUjian').value = '';
-    document.getElementById('kelasUjian').value = '';
-    document.getElementById('durasiUjian').value = '30';
-    document.getElementById('containerSoal').innerHTML = '';
-    nomorSoal = 0;
-    loadDashboard();
-    loadDaftarUjian();
+    const { error } = await supabase.from('ujian').insert([{ judul, mapel, kelas, durasi_menit: durasi, soal: JSON.stringify(soalArray), kode_akses: kodeAkses, created_by: currentUser.id, status: 'aktif' }]);
+    if (error) return alert('Error: ' + error.message);
+    alert('✅ Ujian disimpan!\n\nKode Akses: ' + kodeAkses);
+    document.getElementById('judulUjian').value = ''; document.getElementById('mapelUjian').value = ''; document.getElementById('kelasUjian').value = ''; document.getElementById('durasiUjian').value = '30'; document.getElementById('containerSoal').innerHTML = ''; nomorSoal = 0;
+    loadDashboard(); loadDaftarUjian();
 }
 
-// ======================= DAFTAR UJIAN =======================
 async function loadDaftarUjian() {
-    const { data } = await supabase
-        .from('ujian')
-        .select('*')
-        .order('created_at', { ascending: false });
-
+    const { data } = await supabase.from('ujian').select('*').order('created_at', { ascending: false });
     const tbody = document.querySelector('#tabelSemuaUjian tbody');
     if (data && data.length > 0) {
-        tbody.innerHTML = data.map(u => `
-            <tr>
-                <td><strong>${u.kode_akses}</strong></td>
-                <td>${u.judul}</td>
-                <td>${u.kelas}</td>
-                <td>${u.durasi_menit} menit</td>
-                <td>${u.status === 'aktif' ? '🟢 Aktif' : '🔴 Selesai'}</td>
-                <td>
-                    <button class="btn-sm btn-success" onclick="lihatHasilUjian('${u.id}')">📊 Hasil</button>
-                    ${u.status === 'aktif' ? `<button class="btn-sm btn-danger" onclick="tutupUjian('${u.id}')">🔒 Tutup</button>` : ''}
-                </td>
-            </tr>
-        `).join('');
-    } else {
-        tbody.innerHTML = '<tr><td colspan="6">Belum ada ujian</td></tr>';
-    }
-}
-
-async function tutupUjian(id) {
-    if (!confirm('Tutup ujian ini? Siswa tidak bisa mengakses lagi.')) return;
-    await supabase.from('ujian').update({ status: 'selesai' }).eq('id', id);
-    alert('✅ Ujian ditutup!');
-    loadDaftarUjian();
-    loadDashboard();
+        tbody.innerHTML = data.map(u => `<tr><td><strong>${u.kode_akses}</strong></td><td>${u.judul}</td><td>${u.kelas}</td><td>${u.durasi_menit} menit</td><td>${u.status === 'aktif' ? '🟢' : '🔴'}</td><td><button class="btn-sm btn-success" onclick="lihatHasilUjian('${u.id}')">📊</button></td></tr>`).join('');
+    } else { tbody.innerHTML = '<tr><td colspan="6">Belum ada</td></tr>'; }
 }
 
 function lihatHasilUjian(id) {
@@ -381,69 +251,32 @@ function lihatHasilUjian(id) {
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
     document.querySelector('[data-tab="ujian"]').classList.add('active');
     document.getElementById('ujian').classList.add('active');
-    
     document.querySelectorAll('#ujian .tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('#ujian > div[class="card"]').forEach(d => d.style.display = 'none');
     document.querySelector('[data-subtab="hasil-ujian"]').classList.add('active');
     document.getElementById('hasil-ujian').style.display = 'block';
-    
     document.getElementById('pilihUjianHasil').value = id;
     tampilkanHasil();
 }
 
-// ======================= HASIL UJIAN =======================
 async function loadPilihUjian() {
     const { data } = await supabase.from('ujian').select('*').order('created_at', { ascending: false });
     const select = document.getElementById('pilihUjianHasil');
-    select.innerHTML = '<option value="">--Pilih Ujian--</option>' + 
-        (data?.map(u => `<option value="${u.id}">${u.judul} - ${u.kelas}</option>`).join('') || '');
+    select.innerHTML = '<option value="">--Pilih--</option>' + (data?.map(u => `<option value="${u.id}">${u.judul} - ${u.kelas}</option>`).join('') || '');
 }
 
 async function tampilkanHasil() {
     const ujianId = document.getElementById('pilihUjianHasil').value;
     if (!ujianId) return;
-
-    const { data, error } = await supabase
-        .from('hasil_ujian')
-        .select('*, profiles(nama_lengkap, email)')
-        .eq('ujian_id', ujianId)
-        .order('nilai', { ascending: false });
-
-    if (error || !data || data.length === 0) {
-        alert('📭 Belum ada siswa yang mengerjakan ujian ini.');
-        document.getElementById('tabelHasil').style.display = 'none';
-        return;
-    }
-
+    const { data } = await supabase.from('hasil_ujian').select('*, profiles(nama_lengkap, email)').eq('ujian_id', ujianId).order('nilai', { ascending: false });
+    if (!data || data.length === 0) { document.getElementById('tabelHasil').style.display = 'none'; alert('Belum ada hasil'); return; }
     document.getElementById('tabelHasil').style.display = 'table';
-    const tbody = document.querySelector('#tabelHasil tbody');
-    tbody.innerHTML = data.map((h, i) => `
-        <tr>
-            <td>${i+1}</td>
-            <td>${h.profiles?.nama_lengkap || h.profiles?.email || 'Siswa'}</td>
-            <td><strong>${h.nilai}</strong></td>
-            <td>${new Date(h.selesai).toLocaleString('id-ID')}</td>
-        </tr>
-    `).join('');
-
-    // Chart
+    document.querySelector('#tabelHasil tbody').innerHTML = data.map((h, i) => `<tr><td>${i+1}</td><td>${h.profiles?.nama_lengkap || 'Siswa'}</td><td><strong>${h.nilai}</strong></td><td>${new Date(h.selesai).toLocaleString('id-ID')}</td></tr>`).join('');
     if (chartHasil) chartHasil.destroy();
     const ctx = document.getElementById('chartHasil').getContext('2d');
-    chartHasil = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: data.map(h => h.profiles?.nama_lengkap || 'Siswa'),
-            datasets: [{
-                label: 'Nilai',
-                data: data.map(h => h.nilai),
-                backgroundColor: '#1e4a76'
-            }]
-        },
-        options: { responsive: true }
-    });
+    chartHasil = new Chart(ctx, { type: 'bar', data: { labels: data.map(h => h.profiles?.nama_lengkap || 'Siswa'), datasets: [{ label: 'Nilai', data: data.map(h => h.nilai), backgroundColor: '#1e4a76' }] }, options: { responsive: true } });
 }
 
-// ======================= INIT =======================
 window.onload = cekLogin;
 </script>
 </body>
