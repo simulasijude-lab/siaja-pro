@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ujian Siswa - SiAJa Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #f0f4f8; }
+        .header { background: #2c3e50; color: white; padding: 15px 30px; }
+        .container { max-width: 800px; margin: 30px auto; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .timer { font-size: 24px; color: #e74c3c; font-weight: bold; }
+        .soal { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .pilihan-item { margin: 10px 0; display: flex; align-items: center; gap: 10px; }
+        .btn { padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .btn-submit { background: #27ae60; color: white; width: 100%; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📝 Ujian Online</h1>
+        <div id="timerDisplay" class="timer"></div>
+    </div>
+    <div class="container">
+        <div id="loginPanel" class="card">
+            <h2>Masuk Ujian</h2>
+            <input type="text" id="kodeAkses" placeholder="Masukkan Kode Akses" style="width:100%; padding:10px; margin:10px 0;">
+            <button class="btn btn-submit" onclick="masukUjian()">Masuk Ujian</button>
+        </div>
+        <div id="ujianPanel" style="display:none;">
+            <div id="soalContainer"></div>
+            <button class="btn btn-submit" onclick="submitUjian()">📤 Submit Jawaban</button>
+        </div>
+        <div id="hasilPanel" style="display:none;">
+            <div class="card">
+                <h2>✅ Ujian Selesai!</h2>
+                <h3 id="nilaiAkhir" style="font-size:48px; text-align:center;"></h3>
+                <p style="text-align:center;">Nilai Anda</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Inisialisasi Supabase
+        const SUPABASE_URL = 'https://abcdefghijklm.supabase.co'; // GANTI NANTI
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // GANTI NANTI
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let ujianAktif = null;
+        let jawabanSiswa = [];
+        let timerInterval;
+
+        async function masukUjian() {
+            const kode = document.getElementById('kodeAkses').value;
+            if (!kode) return alert('Masukkan kode akses!');
+
+            const { data } = await supabase
+                .from('ujian')
+                .select('*')
+                .eq('kode_akses', kode)
+                .eq('status', 'aktif')
+                .single();
+
+            if (!data) return alert('Kode akses tidak valid!');
+
+            ujianAktif = data;
+            document.getElementById('loginPanel').style.display = 'none';
+            document.getElementById('ujianPanel').style.display = 'block';
+            
+            renderSoal(data.soal);
+            mulaiTimer(data.durasi_menit);
+        }
+
+        function renderSoal(soal) {
+            const container = document.getElementById('soalContainer');
+            container.innerHTML = soal.map((s, i) => {
+                let html = `<div class="soal"><h4>Soal #${i+1}: ${s.pertanyaan}</h4>`;
+                
+                if (s.tipe === 'pilihan_ganda' && s.pilihan) {
+                    s.pilihan.split('|').forEach((p, j) => {
+                        html += `<div class="pilihan-item"><input type="radio" name="soal${i}" value="${j}"> ${p}</div>`;
+                    });
+                } else if (s.tipe === 'benar_salah') {
+                    html += `<div class="pilihan-item"><input type="radio" name="soal${i}" value="0"> Benar</div>`;
+                    html += `<div class="pilihan-item"><input type="radio" name="soal${i}" value="1"> Salah</div>`;
+                } else {
+                    html += `<input type="text" id="jawaban${i}" placeholder="Jawaban Anda" style="width:100%;">`;
+                }
+                
+                html += `</div>`;
+                return html;
+            }).join('');
+        }
+
+        function mulaiTimer(menit) {
+            let waktu = menit * 60;
+            const display = document.getElementById('timerDisplay');
+            
+            timerInterval = setInterval(() => {
+                const m = Math.floor(waktu / 60);
+                const d = waktu % 60;
+                display.textContent = `⏱ ${m}:${d.toString().padStart(2,'0')}`;
+                
+                if (waktu <= 0) {
+                    clearInterval(timerInterval);
+                    alert('Waktu habis!');
+                    submitUjian();
+                }
+                waktu--;
+            }, 1000);
+        }
+
+        async function submitUjian() {
+            clearInterval(timerInterval);
+            
+            const jawaban = [];
+            let benar = 0;
+            
+            ujianAktif.soal.forEach((soal, i) => {
+                let jawab = '';
+                if (soal.tipe === 'pilihan_ganda' || soal.tipe === 'benar_salah') {
+                    const selected = document.querySelector(`input[name="soal${i}"]:checked`);
+                    jawab = selected ? selected.value : '';
+                } else {
+                    jawab = document.getElementById(`jawaban${i}`)?.value || '';
+                }
+                
+                jawaban.push(jawab);
+                if (jawab === soal.kunci) benar++;
+            });
+
+            const nilai = Math.round((benar / ujianAktif.soal.length) * 100);
+
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            await supabase.from('hasil_ujian').insert([{
+                ujian_id: ujianAktif.id,
+                siswa_id: session.user.id,
+                jawaban: jawaban,
+                nilai: nilai
+            }]);
+
+            document.getElementById('ujianPanel').style.display = 'none';
+            document.getElementById('hasilPanel').style.display = 'block';
+            document.getElementById('nilaiAkhir').textContent = nilai;
+        }
+    </script>
+</body>
+</html>
