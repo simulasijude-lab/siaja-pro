@@ -3,91 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ujian Siswa - SiAJa Pro</title>
+    <title>Siswa - SiAJa Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: #f0f4f8; }
-        .header { background: #2c3e50; color: white; padding: 15px 30px; }
+        .header { background: #2c3e50; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .header h1 { font-size: 18px; }
+        .btn-logout { background: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
         .container { max-width: 800px; margin: 30px auto; padding: 20px; }
         .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { padding: 10px 20px; border: none; border-radius: 20px; cursor: pointer; background: #ecf0f1; font-weight: 600; }
+        .tab-btn.active { background: #2196F3; color: white; }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
         .timer { font-size: 24px; color: #e74c3c; font-weight: bold; }
         .soal { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
         .pilihan-item { margin: 10px 0; display: flex; align-items: center; gap: 10px; }
-        .btn { padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
-        .btn-submit { background: #27ae60; color: white; width: 100%; margin-top: 20px; }
+        .btn { padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; width: 100%; margin-top: 10px; }
+        .btn-submit { background: #27ae60; color: white; }
+        .btn-masuk { background: #2196F3; color: white; }
+        input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background: #34495e; color: white; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>📝 Ujian Online</h1>
-        <div id="timerDisplay" class="timer"></div>
+        <h1>📝 Dashboard Siswa</h1>
+        <div>
+            <span id="namaSiswa" style="margin-right:20px;"></span>
+            <span id="timerDisplay" class="timer" style="margin-right:20px;"></span>
+            <button class="btn-logout" onclick="logout()">Logout</button>
+        </div>
     </div>
     <div class="container">
-        <div id="loginPanel" class="card">
-            <h2>Masuk Ujian</h2>
-            <input type="text" id="kodeAkses" placeholder="Masukkan Kode Akses" style="width:100%; padding:10px; margin:10px 0;">
-            <button class="btn btn-submit" onclick="masukUjian()">Masuk Ujian</button>
+        <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="ujian">📝 Ujian</button>
+            <button class="tab-btn" data-tab="riwayat">📊 Riwayat Nilai</button>
         </div>
-        <div id="ujianPanel" style="display:none;">
-            <div id="soalContainer"></div>
-            <button class="btn btn-submit" onclick="submitUjian()">📤 Submit Jawaban</button>
+
+        <!-- TAB UJIAN -->
+        <div id="ujian" class="tab-pane active">
+            <div id="panelMasuk" class="card">
+                <h3>Masuk Ujian</h3>
+                <p style="color:#888;">Masukkan kode akses yang diberikan guru</p>
+                <input type="text" id="kodeAkses" placeholder="Contoh: UJIAN-9A-ABC123">
+                <button class="btn btn-masuk" onclick="masukUjian()">🔑 Masuk Ujian</button>
+            </div>
+            <div id="panelUjian" style="display:none;">
+                <div id="soalContainer"></div>
+                <button class="btn btn-submit" onclick="submitUjian()">📤 Submit Jawaban</button>
+            </div>
+            <div id="panelHasil" style="display:none;">
+                <div class="card" style="text-align:center;">
+                    <h2>✅ Ujian Selesai!</h2>
+                    <h1 id="nilaiAkhir" style="font-size:72px; color:#27ae60;">0</h1>
+                    <p>Nilai Anda</p>
+                </div>
+            </div>
         </div>
-        <div id="hasilPanel" style="display:none;">
+
+        <!-- TAB RIWAYAT -->
+        <div id="riwayat" class="tab-pane">
             <div class="card">
-                <h2>✅ Ujian Selesai!</h2>
-                <h3 id="nilaiAkhir" style="font-size:48px; text-align:center;"></h3>
-                <p style="text-align:center;">Nilai Anda</p>
+                <h3>📊 Riwayat Nilai Ujian</h3>
+                <table id="tabelRiwayat">
+                    <thead><tr><th>No</th><th>Ujian</th><th>Mapel</th><th>Nilai</th><th>Tanggal</th></tr></thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <script src="script.js"></script>
     <script>
-        // Inisialisasi Supabase
-        const SUPABASE_URL = 'https://abcdefghijklm.supabase.co'; // GANTI NANTI
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // GANTI NANTI
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
         let ujianAktif = null;
-        let jawabanSiswa = [];
         let timerInterval;
+        let currentUser = null;
+
+        async function cekLogin() {
+            // Cek session dari localStorage
+            const sessionStr = localStorage.getItem('siswa_session');
+            if (!sessionStr) {
+                window.location.href = 'login-siswa.html';
+                return;
+            }
+            
+            const session = JSON.parse(sessionStr);
+            
+            // Verifikasi session ke Supabase
+            const { data, error } = await supabase.auth.getSession();
+            if (error || !data.session) {
+                localStorage.removeItem('siswa_session');
+                window.location.href = 'login-siswa.html';
+                return;
+            }
+            
+            currentUser = data.session.user;
+            document.getElementById('namaSiswa').textContent = '👨‍🎓 ' + (currentUser.email || 'Siswa');
+            loadRiwayat();
+        }
+
+        async function logout() {
+            await supabase.auth.signOut();
+            localStorage.removeItem('siswa_session');
+            window.location.href = 'index.html';
+        }
+
+        // Tab navigation
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById(this.dataset.tab).classList.add('active');
+                });
+            });
+        });
 
         async function masukUjian() {
-            const kode = document.getElementById('kodeAkses').value;
+            const kode = document.getElementById('kodeAkses').value.trim();
             if (!kode) return alert('Masukkan kode akses!');
 
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from('ujian')
                 .select('*')
                 .eq('kode_akses', kode)
                 .eq('status', 'aktif')
                 .single();
 
-            if (!data) return alert('Kode akses tidak valid!');
+            if (error || !data) return alert('❌ Kode akses tidak valid atau ujian sudah ditutup!');
+
+            // Cek apakah siswa sudah mengerjakan
+            const { data: sudah } = await supabase
+                .from('hasil_ujian')
+                .select('*')
+                .eq('ujian_id', data.id)
+                .eq('siswa_id', currentUser.id)
+                .single();
+
+            if (sudah) return alert('⚠️ Anda sudah mengerjakan ujian ini!');
 
             ujianAktif = data;
-            document.getElementById('loginPanel').style.display = 'none';
-            document.getElementById('ujianPanel').style.display = 'block';
-            
-            renderSoal(data.soal);
+            document.getElementById('panelMasuk').style.display = 'none';
+            document.getElementById('panelUjian').style.display = 'block';
+
+            let soalArray = [];
+            try { soalArray = JSON.parse(data.soal); } catch(e) { soalArray = data.soal; }
+
+            renderSoal(soalArray);
             mulaiTimer(data.durasi_menit);
         }
 
         function renderSoal(soal) {
             const container = document.getElementById('soalContainer');
             container.innerHTML = soal.map((s, i) => {
-                let html = `<div class="soal"><h4>Soal #${i+1}: ${s.pertanyaan}</h4>`;
+                let html = `<div class="soal"><h4>Soal #${i+1}: ${s.pertanyaan} (Bobot: ${s.bobot || 10})</h4>`;
                 
                 if (s.tipe === 'pilihan_ganda' && s.pilihan) {
                     s.pilihan.split('|').forEach((p, j) => {
-                        html += `<div class="pilihan-item"><input type="radio" name="soal${i}" value="${j}"> ${p}</div>`;
+                        html += `<div class="pilihan-item"><input type="radio" name="soal${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${p.trim()}</div>`;
+                    });
+                } else if (s.tipe === 'pg_kompleks' && s.pilihan) {
+                    html += '<p style="color:#888; font-size:12px;">(Bisa pilih lebih dari 1)</p>';
+                    s.pilihan.split('|').forEach((p, j) => {
+                        html += `<div class="pilihan-item"><input type="checkbox" name="soal${i}" value="${j}"> ${String.fromCharCode(65+j)}. ${p.trim()}</div>`;
                     });
                 } else if (s.tipe === 'benar_salah') {
-                    html += `<div class="pilihan-item"><input type="radio" name="soal${i}" value="0"> Benar</div>`;
-                    html += `<div class="pilihan-item"><input type="radio" name="soal${i}" value="1"> Salah</div>`;
+                    html += `<div class="pilihan-item"><input type="radio" name="soal${i}" value="0"> ✅ Benar</div>`;
+                    html += `<div class="pilihan-item"><input type="radio" name="soal${i}" value="1"> ❌ Salah</div>`;
+                } else if (s.tipe === 'menjodohkan') {
+                    html += `<textarea id="jawaban${i}" rows="3" placeholder='Format: {"A":"1","B":"2"}'></textarea>`;
                 } else {
-                    html += `<input type="text" id="jawaban${i}" placeholder="Jawaban Anda" style="width:100%;">`;
+                    html += `<input type="text" id="jawaban${i}" placeholder="Jawaban Anda">`;
                 }
                 
                 html += `</div>`;
@@ -98,55 +191,91 @@
         function mulaiTimer(menit) {
             let waktu = menit * 60;
             const display = document.getElementById('timerDisplay');
-            
             timerInterval = setInterval(() => {
                 const m = Math.floor(waktu / 60);
                 const d = waktu % 60;
                 display.textContent = `⏱ ${m}:${d.toString().padStart(2,'0')}`;
-                
-                if (waktu <= 0) {
-                    clearInterval(timerInterval);
-                    alert('Waktu habis!');
-                    submitUjian();
-                }
+                if (waktu <= 0) { clearInterval(timerInterval); alert('⏰ Waktu habis!'); submitUjian(); }
                 waktu--;
             }, 1000);
         }
 
         async function submitUjian() {
+            if (!confirm('Yakin submit jawaban?')) return;
             clearInterval(timerInterval);
             
+            let soalArray = [];
+            try { soalArray = JSON.parse(ujianAktif.soal); } catch(e) { soalArray = ujianAktif.soal; }
+
             const jawaban = [];
-            let benar = 0;
-            
-            ujianAktif.soal.forEach((soal, i) => {
+            let totalSkor = 0;
+            let totalBobot = 0;
+
+            soalArray.forEach((soal, i) => {
                 let jawab = '';
+                const bobot = soal.bobot || 10;
+                totalBobot += bobot;
+
                 if (soal.tipe === 'pilihan_ganda' || soal.tipe === 'benar_salah') {
                     const selected = document.querySelector(`input[name="soal${i}"]:checked`);
                     jawab = selected ? selected.value : '';
+                    if (jawab === soal.kunci) totalSkor += bobot;
+                } else if (soal.tipe === 'pg_kompleks') {
+                    const checkboxes = document.querySelectorAll(`input[name="soal${i}"]:checked`);
+                    jawab = Array.from(checkboxes).map(cb => cb.value).sort().join(',');
+                    const kunciArr = soal.kunci.split(',').sort();
+                    if (jawab === kunciArr.join(',')) totalSkor += bobot;
                 } else {
                     jawab = document.getElementById(`jawaban${i}`)?.value || '';
+                    if (jawab.toLowerCase().trim() === soal.kunci.toLowerCase().trim()) totalSkor += bobot;
                 }
-                
                 jawaban.push(jawab);
-                if (jawab === soal.kunci) benar++;
             });
 
-            const nilai = Math.round((benar / ujianAktif.soal.length) * 100);
+            const nilai = Math.round((totalSkor / totalBobot) * 100);
 
-            const { data: { session } } = await supabase.auth.getSession();
-            
-            await supabase.from('hasil_ujian').insert([{
+            const { error } = await supabase.from('hasil_ujian').insert([{
                 ujian_id: ujianAktif.id,
-                siswa_id: session.user.id,
-                jawaban: jawaban,
+                siswa_id: currentUser.id,
+                jawaban: JSON.stringify(jawaban),
                 nilai: nilai
             }]);
 
-            document.getElementById('ujianPanel').style.display = 'none';
-            document.getElementById('hasilPanel').style.display = 'block';
+            if (error) return alert('❌ Gagal submit: ' + error.message);
+
+            document.getElementById('panelUjian').style.display = 'none';
+            document.getElementById('panelHasil').style.display = 'block';
             document.getElementById('nilaiAkhir').textContent = nilai;
+            document.getElementById('timerDisplay').textContent = '';
+            loadRiwayat();
         }
+
+        async function loadRiwayat() {
+            if (!currentUser) return;
+            
+            const { data, error } = await supabase
+                .from('hasil_ujian')
+                .select('*, ujian(judul, mapel)')
+                .eq('siswa_id', currentUser.id)
+                .order('selesai', { ascending: false });
+
+            const tbody = document.querySelector('#tabelRiwayat tbody');
+            if (data && data.length > 0) {
+                tbody.innerHTML = data.map((h, i) => `
+                    <tr>
+                        <td>${i+1}</td>
+                        <td>${h.ujian?.judul || '-'}</td>
+                        <td>${h.ujian?.mapel || '-'}</td>
+                        <td><strong>${h.nilai}</strong></td>
+                        <td>${new Date(h.selesai).toLocaleDateString('id-ID')}</td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="5">Belum ada riwayat ujian</td></tr>';
+            }
+        }
+
+        window.onload = cekLogin;
     </script>
 </body>
 </html>
